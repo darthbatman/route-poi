@@ -53,13 +53,29 @@ def get_towns(coordinates, dest):
 
 
 def distance(c1, c2):
-    # TODO: implement
-    pass
+    x1 = float(c1[0])
+    y1 = float(c1[1])
+    x2 = float(c2[0])
+    y2 = float(c2[1])
+    return ((x2 - x1) ** 2) + ((y2 - y1) ** 2) ** 0.5
 
 
 def filter_coordinates(coordinates, dist_apart):
-    # TODO: implement
-    pass
+    filtered = []
+    i = 0
+    j = 1
+    for _ in coordinates:
+        if j < len(coordinates):
+            if distance(coordinates[i], coordinates[j]) < dist_apart:
+                j += 1
+            else:
+                filtered.append(coordinates[i])
+                i = j
+                j += 1
+        else:
+            if filtered[-1] != coordinates[i]:
+                filtered.append(coordinates[i])
+            return filtered
 
 
 def get_first_route_towns(towns):
