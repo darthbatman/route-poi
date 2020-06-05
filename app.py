@@ -83,7 +83,46 @@ def get_first_route_towns(towns):
         return towns[:towns[2:].index(towns[0]) + 2]
 
 
-def get_route_poi(start, dest):
+def find_poi(html, poi, town):
+    found_poi = []
+
+    tok_1 = '[[\\\"' + poi + ' near ' + town
+    tok_2 = '[\\\"' + poi + '\\\"]\\n]'
+    tok_3 = ', '
+    tok_4 = ',[[\\\"'
+    tok_5 = '\\\"]\\n'
+    tok_6 = '[\\\"'
+    tok_7 = ','
+
+    for tok in html.split(tok_1)[1].split(tok_2)[0].lower() \
+                   .split(town.split(tok_3)[0] + tok_3):
+        if len(tok) > 200 and len(tok[-200:].split(tok_4)) > 1:
+            place = tok[-200:].split(tok_4)[1].split(tok_7)[0].split(tok_5)[0]
+            address = tok[-200:].split(tok_4)[1].split(tok_7)[1] \
+                                .split(tok_5)[0] \
+                                .replace(tok_6, '') + tok_3 + town
+            found_poi.append({'name': place, 'address': address})
+
+    return found_poi
+
+
+def get_poi(towns, req_poi):
+    api_url = 'https://www.google.com/maps/search/'
+    town_pois = {}
+
+    for town in towns:
+        town_poi = {}
+        for poi in req_poi:
+            url = api_url + poi + '+near+' + town.replace(' ', '+') + '/'
+            res = requests.get(url)
+            found = find_poi(res.text, poi, town)
+            town_poi[poi] = found
+        town_pois[town] = town_poi
+
+    return town_pois
+
+
+def get_route_poi(start, dest, req_poi):
     url = build_request_url(start, dest)
     res = requests.get(url)
 
@@ -94,8 +133,12 @@ def get_route_poi(start, dest):
     towns = get_first_route_towns(towns)
     towns = list(dict.fromkeys(towns))
 
+    return get_poi(towns, req_poi)
+
 
 if __name__ == '__main__':
     start = '58 Frost Avenue East, Edison, NJ'
     dest = '1008 W Main St, Urbana, IL 61801'
-    get_route_poi(start, dest)
+    req_poi = ['food', 'gas']
+    route_poi = get_route_poi(start, dest, req_poi)
+    print(route_poi)
